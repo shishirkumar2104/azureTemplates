@@ -1,0 +1,195 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Compute.MultiVm",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "basics": [],
+        "steps": [
+            {
+                "name": "infraConfig",
+                "label": "Administrator settings",
+                "subLabel": {
+                    "preValidation": "Configure deployment settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Administrator settings",
+                "elements": [
+                    {
+                        "name": "Name",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Virtual Machine name",
+                        "toolTip": "The name of the Virtual Machine.",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[A-Za-z0-9]{1,15}$",
+                            "validationMessage": "VM name must be alphanumeric and between 1 to 15 characters in length."
+                        }
+                    },
+                    {
+                        "name": "adminUsername",
+                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "label": "Username",
+                        "toolTip": "Admin username for the virtual machines.",
+                        "osPlatform": "Linux",
+                        "constraints": {
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "Credentials",
+                        "type": "Microsoft.Compute.CredentialsCombo",
+                        "label": {
+                            "password": "Password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": {
+                            "password": "Password for the Virtual Machine"
+                        },
+                        "constraints": {
+                            "required": true
+                        },
+                        "options": {
+                            "hideConfirmation": false
+                        },
+                        "osPlatform": "Linux"
+                    }
+                ]
+            },
+            {
+                "name": "WANcentermyapplianceConfig",
+                "label": "Citrix SDWAN Center myappliance settings",
+                "subLabel": {
+                    "preValidation": "Configure Citrix SD-WAN Center appliance.",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Citrix SD-WAN Center settings",
+                "elements": [
+                    {
+                        "name": "Size",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Virtual machine size",
+                        "toolTip": "The size of virtual machine to provision.",
+                        "recommendedSizes": [
+                            "Standard_D3_v2",
+                            "Standard_F16"
+                        ],
+                        "constraints": {
+                            "allowedSizes": [
+                                "Standard_D3_v2",
+                                "Standard_F16"
+                            ]
+                        },
+                        "osPlatform": "Linux",
+                        "imageReference": {
+                            "publisher": "citrix",
+                            "offer": "ctxsdwancenter",
+                            "sku": "citrixsd-wancenter"
+                        },
+                        "count": "1"
+                    },
+                    {
+                        "name": "osDiskSize",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "OS Disk Size(GB)",
+                        "defaultValue": "8",
+                        "toolTip": "Attach additional storage to SDWAN Center if deploying for scale",
+                        "visible": true
+                    },
+                    {
+                        "name": "storageAccount",
+                        "type": "Microsoft.Storage.StorageAccountSelector",
+                        "label": "Storage account",
+                        "toolTip": "Storage Account for the Virtual Machine's Disks",
+                        "defaultValue": {
+                            "type": "Standard_LRS"
+                        },
+                        "constraints": {
+                            "allowedTypes": [
+                                "Standard_LRS",
+                                "Standard_GRS",
+								"Standard_RAGRS",
+                                "Standard_ZRS",
+                                "Premium_LRS "
+                            ]
+                        }
+                    },
+                    {
+                        "name": "MgmtpublicIpAddress",
+                        "type": "Microsoft.Network.PublicIpAddressCombo",
+                        "label": {
+                            "publicIpAddress": "Public IP address for management access",
+                            "domainNameLabel": "DNS label"
+                        },
+                        "toolTip": {
+                            "domainNameLabel": "DNS label for the Virtual Machine's public IP address."
+                        },
+                        "defaultValue": {
+                            "publicIpAddressName": ""
+                        },
+                        "options": {
+                            "hideNone": true
+                        },
+                        "constraints": {
+                            "required": {
+                                "domainNameLabel": true
+                            }
+                        }
+                    },
+                    {
+                        "name": "virtualNetwork",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "Virtual Network Name",
+                            "subnets": "Subnets requied for the SD-WAN center myappliance solution"
+                        },
+                        "defaultValue": {
+                            "name": "vnet01",
+                            "addressPrefixSize": "/16"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/16"
+                        },
+                        "subnets": {
+                            "subnet1": {
+                                "label": "Manangement subnet",
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24",
+                                    "minAddressCount": 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "vmName": "[steps('infraConfig').Name]",
+            "adminUsername": "[steps('infraConfig').adminUsername]",
+            "adminPassword": "[steps('infraConfig').Credentials.password]",
+            "vmSize": "[steps('WANcentermyapplianceConfig').Size]",
+            "osDiskSize": "[int(steps('WANcentermyapplianceConfig').osDiskSize)]",
+            "Location": "[location()]",
+            "newStorageAccountName": "[steps('WANcentermyapplianceConfig').storageAccount.name]",
+            "storageAccountType": "[steps('WANcentermyapplianceConfig').storageAccount.type]",
+            "storageAccountNewOrExisting": "[steps('WANcentermyapplianceConfig').storageAccount.newOrExisting]",
+            "storageAccountExistingRG": "[steps('WANcentermyapplianceConfig').storageAccount.resourceGroup]",
+            "MgmtpublicIPAddressName": "[steps('WANcentermyapplianceConfig').MgmtpublicIpAddress.name]",
+            "MgmtpublicIPDnsName": "[steps('WANcentermyapplianceConfig').MgmtpublicIpAddress.domainNameLabel]",
+            "MgmtpublicIPNewOrExisting": "[steps('WANcentermyapplianceConfig').MgmtpublicIpAddress.newOrExistingOrNone]",
+            "MgmtpublicIPExistingRGName": "[steps('WANcentermyapplianceConfig').MgmtpublicIpAddress.resourceGroup]",
+            "MgmtpublicIPAllocationMethod": "[steps('WANcentermyapplianceConfig').MgmtpublicIpAddress.MgmtpublicIPAllocationMethod]",
+            "MgmtpublicIPSku": "[steps('WANcentermyapplianceConfig').MgmtpublicIpAddress.MgmtpublicIpSku]",
+            "virtualNetworkName": "[steps('WANcentermyapplianceConfig').virtualNetwork.name]",
+            "virtualNetworkAddressPrefix": "[steps('WANcentermyapplianceConfig').virtualNetwork.addressPrefixes]",
+            "Subnet1Name": "[steps('WANcentermyapplianceConfig').virtualNetwork.subnets.subnet1.name]",
+            "Subnet1Prefix": "[steps('WANcentermyapplianceConfig').virtualNetwork.subnets.subnet1.addressPrefix]",
+            "vnetNewOrExisting": "[steps('WANcentermyapplianceConfig').virtualNetwork.newOrExisting]",
+            "virtualNetworkExistingRGName": "[steps('WANcentermyapplianceConfig').virtualNetwork.resourceGroup]",
+            "subnet1StartAddress": "[steps('WANcentermyapplianceConfig').virtualNetwork.subnets.subnet1.startAddress]"
+        }
+    }
+}
